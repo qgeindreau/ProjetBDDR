@@ -1,0 +1,7 @@
+{
+    "url":
+    {
+        "Dataset":"https://math.univ-angers.fr/~jaclin/enron/enron_mail_20150507.tar.gz",
+        "InfoComp":"https://math.univ-angers.fr/~jaclin/enron/employes_enron.xml"
+    }
+}
