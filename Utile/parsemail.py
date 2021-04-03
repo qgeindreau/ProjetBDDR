@@ -1,5 +1,5 @@
 from email.parser import Parser
-with open('2.txt', "r") as f:
+with open('Utile/2.txt', "r") as f:
     data = f.read()
     
 email = Parser().parsestr(data)
