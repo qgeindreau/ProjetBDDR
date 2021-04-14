@@ -1,21 +1,17 @@
 from email.parser import Parser 
-import datetime
-with open('Utile/2.txt', "r") as f:
-    data = f.read()
-    
+from dateutil.parser import parse
+import datetime, maya, pytz
+from pytz import timezone
+with open('../../Utile/2.txt', "r") as f:
+    data = f.read() 
 email = Parser().parsestr(data)
 
-date_time_str = email['date']
-#date_time_obj = datetime.datetime.strptime(date_time_str, "%a, %d %B, %Y")
-
-
-import maya
-
-dt = maya.parse(date_time_str).datetime()
-print(dt)
-import maya
-import datetime
 def conv_time(txt):
     return maya.parse(txt).datetime()
+def conv_time2(txt):
+    return parse(txt).astimezone(timezone('UTC'))
 
-print(conv_time(date_time_str))
+test='Tue, 29 Aug 2000 1:50:00 -0700 (PDT)'
+
+print(conv_time(test))
+print(conv_time2(test))
