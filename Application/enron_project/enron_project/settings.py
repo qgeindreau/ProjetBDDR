@@ -77,10 +77,10 @@ WSGI_APPLICATION = 'enron_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql', # on utilise l'adaptateur postgresql
-        'NAME': 'qgeindreau', # le nom de notre base de donnees creee precedemment
-        'USER': 'qgeindreau', # attention : remplacez par votre nom d'utilisateur
-        'PASSWORD': '455521',
-        'HOST': 'savennieres.math.univ-angers.fr.',
+        'NAME': 'tecmintdb', # le nom de notre base de donnees creee precedemment
+        'USER': 'tecmint', # attention : remplacez par votre nom d'utilisateur
+        'PASSWORD': 'securep@wd',
+        'HOST': '',
         'PORT': '',
     }
 }

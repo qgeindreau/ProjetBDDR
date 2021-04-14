@@ -18,9 +18,9 @@ for user in root.findall('employee'):
         addresse=User_Email(user_id=utilisateur,adr_Mail=neighbor.attrib['address'])
         liste_addresse.append(addresse)
 
-#for people in liste_user:
-#    people.save()
-#for add in liste_addresse:
-#    add.save()
-#utilisateur=User(nom='NotInEnron',prenom='NotInEnron',categorie='NotInEnron')
-#utilisateur.save()
+for people in liste_user:
+    people.save()
+for add in liste_addresse:
+    add.save()
+utilisateur=User(nom='NotInEnron',prenom='NotInEnron',categorie='NotInEnron')
+utilisateur.save()
