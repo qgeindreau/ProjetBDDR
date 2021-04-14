@@ -5,7 +5,7 @@ from email.parser import Parser
 from dateutil.parser import parse
 from pytz import timezone
 def is_response(txt): #Renvoie 1 si c'est une réponse (càd si RE: est présent dans le subject)
-    return not(txt.find('RE:')==-1 )
+    return not(txt.find('RE:')==-1 and txt.find('re:')==-1 and txt.find('Re:')==-1 )
 
 path="../../Utile/maildir"
 listdir_files = []

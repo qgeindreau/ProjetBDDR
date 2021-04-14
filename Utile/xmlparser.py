@@ -1,12 +1,5 @@
-import xml.etree.ElementTree as ET
-tree = ET.parse('../../Utile/employes_enron.xml')
-root = tree.getroot()
-for user in root.findall('employee'):
-    role = user.get('category')
-    if type(role)=='NoneType':
-        role='Employee'
-    full_name = user.find('lastname').text + ' '+user.find('firstname').text
-    email=user.get('address')
-    for neighbor in user.iter('email'):
-        print(neighbor.attrib['address'])
-    print(full_name, role,email)
+def is_response(txt): #Renvoie 1 si c'est une réponse (càd si RE: est présent dans le subject)
+    return not(txt.find('RE:')==-1 and txt.find('re:')==-1 and txt.find('Re:')==-1 )
+
+
+print(is_response('Re:'))

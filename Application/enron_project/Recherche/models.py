@@ -23,7 +23,7 @@ class User_Email(models.Model):
 
 class Mail(models.Model):
     date = models.DateTimeField()
-    objet = models.CharField(max_length=30)
+    objet = models.CharField(max_length=300)
     is_a_response = models.BooleanField()
     mail_user_id = models.ForeignKey(
           User_Email,
