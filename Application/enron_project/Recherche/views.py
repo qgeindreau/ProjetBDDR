@@ -92,3 +92,12 @@ def search(request):
         'title': title
     }
     return render(request, 'Recherche/search.html', context)
+
+def couple(request):
+    query = request.GET.get('query')
+    context={
+        'begin_date':11,
+        'end_date':22,
+        'query':query
+    }
+    return render(request, 'Recherche/couple.html', context)
