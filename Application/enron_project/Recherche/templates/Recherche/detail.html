@@ -1,0 +1,41 @@
+{% extends 'Recherche/base.html' %}
+
+{% block content %}
+<hr>
+<h1 class="intro-text text-center">{{ user_nom }} {{user_prenom}}</h1>
+<hr class="detail-separator">
+<div class="col-md-6">
+  <h2 class="text-center user_nom">Identité:</h2>
+  <h3 >{{ user_categorie}}</h3>
+  <h3 >{{ user_nom }} {{user_prenom}}</h3> 
+  <h2 class="text-center user_nom">Quelques stats:</h2>
+  <h3 class="text-center user_nom">Mails envoyés:</h3>
+  <p>Interne:  {{user_s_in}}</p>
+  <p>Externe:  {{user_s_out}}</p>
+  <p>Total:  {{user_s_tot}}</p>
+  <p>Ratio In/Tot:  {{ratio_s_i_tot}}%</p>
+  <h3 class="text-center user_nom">Mails reçu:</h3>
+  <p>Interne:  {{user_r_in}}</p>
+  <p>Externe:  {{user_r_out}}</p>
+  <p>Total:  {{user_r_tot}}</p>
+  <p>Ratio In/Tot:  {{ratio_r_i_tot}}%</p>
+</div>
+<div class="col-md-6">
+  <div style="margin-bottom:45px">
+    <h2 class="text-center user_nom">Addresse(s) email(s):</h2>
+    {% for i in user_email %}
+      <p>{{ i }}</p>
+    {% endfor %}
+
+    <h2 class="text-center user_nom">Contacts:</h2>
+    {% for i in user_contact %}
+      <p>{{ i.nom }} {{ i.prenom }} {{ i.categorie }}</p>
+    {% endfor %}
+  </div>
+
+
+
+</div>
+
+
+{% endblock %}
