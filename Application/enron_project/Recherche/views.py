@@ -1,17 +1,38 @@
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-
 from .models import User, User_Email, Mail,Mail_Receiver
+from django.db import connection
+import pandas as pd
+import numpy as np
+import json
+def sql_asker(query,param):
+    with connection.cursor() as cursor:
+        cursor.execute(query, [param])
+        row = cursor.fetchall()
+    return row
+
+def find_max_and_where(array,hmany):
+    val_pos=[]
+    while hmany>0:
+        val=np.amax(array)
+        pos=list(zip(*np.where(array == val)))
+        val_pos.append((val,pos))
+        for i in pos:
+            array[i[0]][i[1]]=0
+            hmany+=-1
+    return val_pos
+
+
 
 def index(request):
-    users = User.objects.filter()[:12]
+    users = User.objects.exclude(nom='NotInEnron')[:12]
     context = {
         'users': users
     }
     return render(request, 'Recherche/index.html', context)
 
 def listing(request):
-    users_list = User.objects.filter().order_by('nom')
+    users_list = User.objects.exclude(nom='NotInEnron').order_by('nom')
     paginator = Paginator(users_list, 9)
     page = request.GET.get('page')
     try:
@@ -82,10 +103,10 @@ WHERE t1.id=%s AND t6.prenom='NotInEnron';''',[user.id])
 def search(request):
     query = request.GET.get('query')
     if not query:
-        users = User.objects.all()
+        users = User.objects.exclude(nom='NotInEnron')
     else:
         # title contains the query is and query is not sensitive to case.
-        users = User.objects.filter(nom__icontains=query)
+        users = User.objects.filter(nom__icontains=query).exclude(nom='NotInEnron')
     title = "Résultats pour la requête %s"%query
     context = {
         'users': users,
@@ -94,10 +115,32 @@ def search(request):
     return render(request, 'Recherche/search.html', context)
 
 def couple(request):
-    query = request.GET.get('query')
+    user_list=User.objects.exclude(nom='NotInEnron')
+    grille=pd.DataFrame(columns=[i.id for i in user_list],index=[i.id for i in user_list]).fillna(0)
+    for ligne in list(grille.index):
+            req=sql_asker('''SELECT t6.id,count(t6.id)
+FROM "Recherche_user" AS t1 
+	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
+	JOIN "Recherche_mail" AS t3 ON t2.id =t3.mail_user_id_id
+	JOIN "Recherche_mail_receiver" AS t4 ON t3.id=t4.mail_id_id
+	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
+	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
+WHERE t1.id=%s AND t6.prenom!='NotInEnron' GROUP BY t6.id;''',ligne)
+            for col_val in req:
+                grille.loc[ligne].loc[col_val[0]]=col_val[1]
+    grille_finale=grille+grille.transpose(copy=True)
+    grille_finale=np.triu(grille_finale,1)
+    l,c=np.shape(grille_finale)
+    grille_finale=np.concatenate((np.zeros(l).reshape(1,l),grille_finale),axis=0)
+    grille_finale=np.concatenate((np.zeros(c+1).reshape(1+c,1),grille_finale),axis=1)
+    construction=[(i[0],(User.objects.get(id=i[1][0][0]),User.objects.get(id=i[1][0][1]))) for i in find_max_and_where(grille_finale,10) ]
+    class PourTemplate:
+        def __init__(self,var):
+            self.valeur=int(var[0])
+            self.user1=var[1][0]
+            self.user2=var[1][1]
+    ready=[PourTemplate(i) for i in construction]
     context={
-        'begin_date':11,
-        'end_date':22,
-        'query':query
+        'data':ready
     }
     return render(request, 'Recherche/couple.html', context)

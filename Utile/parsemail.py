@@ -2,10 +2,7 @@ from email.parser import Parser
 from dateutil.parser import parse
 import datetime, maya, pytz
 from pytz import timezone
-with open('../../Utile/2.txt', "r") as f:
-    data = f.read() 
-email = Parser().parsestr(data)
-
+import pandas as PDT
 def conv_time(txt):
     return maya.parse(txt).datetime()
 def conv_time2(txt):

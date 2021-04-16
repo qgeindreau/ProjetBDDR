@@ -1,7 +1,13 @@
 {% extends 'Recherche/base.html' %}
 
 {% block content %}
-<h1 class="intro-text text-center">Date:{{ begin_date}} {{end_date}} {{ query }}</h1>
+
+<div style="margin-bottom:45px">
+  <h2 class="text-center user_nom">Les personnes (distinct) ayant le plus communiqué:</h2>
+  {% for i in data %}
+    <p><a href="{% url 'Recherche:detail' user_id=i.user1.id %}"> {{i.user1.nom}} {{i.user1.prenom}} </a> et <a href="{% url 'Recherche:detail' user_id=i.user2.id %}">{{i.user2.nom}} {{i.user2.prenom}}</a> pour un total de {{i.valeur}} messages ! </p>
+  {% endfor %}
+</div>
 
 
 
