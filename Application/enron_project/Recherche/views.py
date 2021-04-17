@@ -115,6 +115,7 @@ def search(request):
     return render(request, 'Recherche/search.html', context)
 
 def couple(request):
+    
     user_list=User.objects.exclude(nom='NotInEnron')
     grille=pd.DataFrame(columns=[i.id for i in user_list],index=[i.id for i in user_list]).fillna(0)
     for ligne in list(grille.index):
@@ -144,3 +145,49 @@ WHERE t1.id=%s AND t6.prenom!='NotInEnron' GROUP BY t6.id;''',ligne)
         'data':ready
     }
     return render(request, 'Recherche/couple.html', context)
+
+
+
+
+def employe(request):
+    users=User.objects.exclude(nom='NotInEnron')
+    nombre_de_mail_externe=[(i,len(User.objects.raw('''SELECT t6.id
+FROM "Recherche_user" AS t1 
+	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
+	JOIN "Recherche_mail" AS t3 ON t2.id =t3.mail_user_id_id
+	JOIN "Recherche_mail_receiver" AS t4 ON t3.id=t4.mail_id_id
+	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
+	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
+WHERE t1.id=%s AND t6.prenom='NotInEnron';''',[i]))) for i in range(0,len(users))]
+    nombre_de_mail_interne=[(i,len(User.objects.raw('''SELECT t6.id
+FROM "Recherche_user" AS t1 
+	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
+	JOIN "Recherche_mail" AS t3 ON t2.id =t3.mail_user_id_id
+	JOIN "Recherche_mail_receiver" AS t4 ON t3.id=t4.mail_id_id
+	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
+	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
+WHERE t1.id=%s AND t6.prenom!='NotInEnron';''',[i]))) for i in range(0,len(users))]
+    context={
+        'n':nombre_de_mail_externe,
+        'm':nombre_de_mail_interne
+
+
+    }
+    return render(request, 'Recherche/employe.html', context)
+
+
+
+def jour(request):
+    query = request.GET.get('query')
+    if not query:
+        users = User.objects.exclude(nom='NotInEnron')
+    else:
+        # title contains the query is and query is not sensitive to case.
+        users = User.objects.filter(nom__icontains=query).exclude(nom='NotInEnron')
+    title = "Résultats pour la requête %s"%query
+    context = {
+        'users': users,
+        'title': title,
+        'p':158
+    }
+    return render(request, 'Recherche/jour.html', context)
