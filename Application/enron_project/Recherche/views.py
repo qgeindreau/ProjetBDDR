@@ -56,7 +56,7 @@ FROM "Recherche_user" AS t1
 	JOIN "Recherche_mail_receiver" AS t4 ON t3.id=t4.mail_id_id
 	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
 	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
-WHERE t1.id=%s AND t6.prenom!='NotInEnron';''',[user.id])
+WHERE t1.id=%s AND t5."adr_Mail" ~ '@enron.com$';''',[user.id])
     contact_as_receiver_in=User.objects.raw('''SELECT t1.id
 FROM "Recherche_user" AS t1 
 	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
@@ -64,7 +64,7 @@ FROM "Recherche_user" AS t1
 	JOIN "Recherche_mail_receiver" AS t4 ON t3.id=t4.mail_id_id
 	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
 	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
-WHERE t6.id=%s AND t1.prenom!='NotInEnron';''',[user.id])
+WHERE t6.id=%s AND t2."adr_Mail" ~ '@enron.com$';''',[user.id])
     contact_as_receiver_out=User.objects.raw('''SELECT t1.id
 FROM "Recherche_user" AS t1 
 	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
@@ -72,7 +72,7 @@ FROM "Recherche_user" AS t1
 	JOIN "Recherche_mail_receiver" AS t4 ON t3.id=t4.mail_id_id
 	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
 	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
-WHERE t6.id=%s AND t1.prenom='NotInEnron';''',[user.id])
+WHERE t6.id=%s AND t2."adr_Mail" !~ '@enron.com$';''',[user.id])
     contact_as_sender_out=User.objects.raw('''SELECT t6.id
 FROM "Recherche_user" AS t1 
 	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
@@ -80,14 +80,36 @@ FROM "Recherche_user" AS t1
 	JOIN "Recherche_mail_receiver" AS t4 ON t3.id=t4.mail_id_id
 	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
 	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
-WHERE t1.id=%s AND t6.prenom='NotInEnron';''',[user.id])
+WHERE t1.id=%s AND t5."adr_Mail" !~ '@enron.com$';''',[user.id])
+    contact_list=list(set(contact_as_sender_in)|set(contact_as_receiver_in))
+    paginator = Paginator(contact_list, 6)
+    page = request.GET.get('page')
+    try:
+        user_contact = paginator.page(page)
+    except PageNotAnInteger:
+        user_contact = paginator.page(1)
+    except EmptyPage:
+        user_contact = paginator.page(paginator.num_pages)
+    list_mail_rep=sql_asker('''SELECT DISTINCT t3."objet",t5."objet"
+FROM "Recherche_user" AS t1 
+	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
+	JOIN "Recherche_mail" AS t3 ON t2.id =t3.mail_user_id_id
+	JOIN "Recherche_mail_receiver" AS t4 ON t4.user_mail_id_id=t2.id
+	JOIN "Recherche_mail" AS t5 ON t4.mail_id_id = t5.id AND substring( t3.objet from 5) = t5.objet
+WHERE t1.id=%s AND t3."is_a_response"=true AND t5.objet!='' ;''',user_id)
+    class temps_rep:
+        def __init__(self,tuplee):
+            self.timeR=Mail.objects.get(objet=tuplee[0]).date
+            self.timeE=Mail.objects.get(objet=tuplee[1]).date
 
+
+    
     context = {
         'user_nom': user.nom,
         'user_prenom':user.prenom,
         'user_categorie':user.categorie,
         'user_email':[i.adr_Mail for i in User_Email.objects.filter(user_id=user.id)],
-        'user_contact':set(contact_as_sender_in)|set(contact_as_receiver_in),
+        'user_contact':user_contact,
         'user_s_tot':len(contact_as_sender_in)+len(contact_as_sender_out),
         'user_s_in':len(contact_as_sender_in),
         'user_s_out':len(contact_as_sender_out),
@@ -96,6 +118,7 @@ WHERE t1.id=%s AND t6.prenom='NotInEnron';''',[user.id])
         'user_r_in':len(contact_as_receiver_in),
         'user_r_out':len(contact_as_receiver_out),
         'ratio_r_i_tot':round(len(contact_as_receiver_in)/(len(contact_as_receiver_in)+len(contact_as_receiver_out)),3)*100,
+        'paginate':True
     }
     # solidays
     return render(request, 'Recherche/detail.html', context)
@@ -115,7 +138,7 @@ def search(request):
     return render(request, 'Recherche/search.html', context)
 
 def couple(request):
-    
+
     user_list=User.objects.exclude(nom='NotInEnron')
     grille=pd.DataFrame(columns=[i.id for i in user_list],index=[i.id for i in user_list]).fillna(0)
     for ligne in list(grille.index):
@@ -185,9 +208,11 @@ def jour(request):
         # title contains the query is and query is not sensitive to case.
         users = User.objects.filter(nom__icontains=query).exclude(nom='NotInEnron')
     title = "Résultats pour la requête %s"%query
+    data=users[1]
     context = {
         'users': users,
         'title': title,
-        'p':158
+        'p':158,
+        'user':data
     }
     return render(request, 'Recherche/jour.html', context)

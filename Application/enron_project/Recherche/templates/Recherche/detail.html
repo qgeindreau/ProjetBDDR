@@ -27,15 +27,41 @@
       <p>{{ i }}</p>
     {% endfor %}
 
-    <h2 class="text-center user_nom">Contacts:</h2>
-    {% for i in user_contact %}
-      <p>{{ i.nom }} {{ i.prenom }} {{ i.categorie }}</p>
-    {% endfor %}
+    <h2 class="text-center user_nom">Contacts connus:</h2>
+  {% if users_contact|length_is:"0" %}
+  <div class="text-center">
+    Un peu de sérieux voyons ! Personne ne porte ce nom ici !
   </div>
+
+{% else %}
+  {% for user in user_contact %}
+      <div class="col-sm-4 text-center">
+          <a href="{% url 'Recherche:detail' user_id=user.id %}">
+            <img class="img-responsive" src="{{ album.picture }}" alt="{{ user.categorie }}">
+          </a>
+          <h3><a href="{% url 'Recherche:detail' user_id=user.id %}">{{ user.prenom }} {{ user.nom }}</a></h3>
+      </div>
+      {% if forloop.counter|divisibleby:2 %}<div class="clearfix"></div>{% endif %}
+  {% endfor %}
+{% endif %}
+{% if paginate %}
+<div class="clearfix"></div>
+<nav aria-label="">
+  <ul class="pager">
+    {% if user_contact.has_previous %}
+        <li><a href="?page={{ user_contact.previous_page_number }}">Précédent</a></li>
+    {% endif %}
+    {% if user_contact.has_next %}
+        <li><a href="?page={{ user_contact.next_page_number }}">Suivant</a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
 
 
 
 </div>
 
+{{time_rep}}
 
 {% endblock %}
