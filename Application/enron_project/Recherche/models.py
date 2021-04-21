@@ -22,9 +22,11 @@ class User_Email(models.Model):
         return 'Addresse: '+self.adr_Mail
 
 class Mail(models.Model):
+    identifiant=models.CharField(max_length=300,unique=True)
     date = models.DateTimeField()
     objet = models.CharField(max_length=300)
     is_a_response = models.BooleanField()
+    Mad=models.DateTimeField(blank=True,default='')
     mail_user_id = models.ForeignKey(
           User_Email,
           on_delete=models.CASCADE,

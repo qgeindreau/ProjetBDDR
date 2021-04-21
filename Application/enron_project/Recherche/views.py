@@ -90,20 +90,22 @@ WHERE t1.id=%s AND t5."adr_Mail" !~ '@enron.com$';''',[user.id])
         user_contact = paginator.page(1)
     except EmptyPage:
         user_contact = paginator.page(paginator.num_pages)
-    list_mail_rep=sql_asker('''SELECT DISTINCT t3."objet",t5."objet"
-FROM "Recherche_user" AS t1 
-	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
-	JOIN "Recherche_mail" AS t3 ON t2.id =t3.mail_user_id_id
-	JOIN "Recherche_mail_receiver" AS t4 ON t4.user_mail_id_id=t2.id
-	JOIN "Recherche_mail" AS t5 ON t4.mail_id_id = t5.id AND substring( t3.objet from 5) = t5.objet
-WHERE t1.id=%s AND t3."is_a_response"=true AND t5.objet!='' ;''',user_id)
-    class temps_rep:
-        def __init__(self,tuplee):
-            self.timeR=Mail.objects.get(objet=tuplee[0]).date
-            self.timeE=Mail.objects.get(objet=tuplee[1]).date
-
-
-    
+    avg_time_rep=sql_asker('''SELECT AVG(t3.date-t3."Mad")
+FROM "Recherche_user" t1
+JOIN "Recherche_user_email" t2 ON t1.id = t2.user_id_id
+JOIN "Recherche_mail" t3 ON t2.id = t3.mail_user_id_id
+WHERE t1.id=%s AND t3.is_a_response=true AND t3."Mad" > '1901-01-01' AND t3.date > t3."Mad";''',user_id)[0][0]
+    avg_msd=sql_asker('''SELECT count(t3."id") ,(MAX (t3.date)-MIN(t3.date))
+FROM "Recherche_user" t1
+JOIN "Recherche_user_email" t2 ON t1.id = t2.user_id_id
+JOIN "Recherche_mail" t3 ON t2.id = t3.mail_user_id_id
+WHERE t1.id=%s;''',user_id)
+    avg_mrd=sql_asker('''SELECT COUNT(t3.id),(MAX(t4.date)-MIN(t4.date))
+FROM "Recherche_user" t1
+JOIN "Recherche_user_email" t2 ON t1.id = t2.user_id_id
+JOIN "Recherche_mail_receiver" t3 ON t2.id = t3.user_mail_id_id
+JOIN "Recherche_mail" t4 ON t3.mail_id_id=t4.id
+WHERE t1.id=%s;''',user_id)
     context = {
         'user_nom': user.nom,
         'user_prenom':user.prenom,
@@ -118,9 +120,12 @@ WHERE t1.id=%s AND t3."is_a_response"=true AND t5.objet!='' ;''',user_id)
         'user_r_in':len(contact_as_receiver_in),
         'user_r_out':len(contact_as_receiver_out),
         'ratio_r_i_tot':round(len(contact_as_receiver_in)/(len(contact_as_receiver_in)+len(contact_as_receiver_out)),3)*100,
-        'paginate':True
+        'paginate':True,
+        'avg_time_rep':avg_time_rep,
+        'avg_msd':round((avg_msd[0][0]/avg_msd[0][1].total_seconds())*3600*24,2),
+        'avg_mrd':round((avg_mrd[0][0]/avg_mrd[0][1].total_seconds())*3600*24,2),
+        'msg_diff':avg_msd[0][0]
     }
-    # solidays
     return render(request, 'Recherche/detail.html', context)
 
 def search(request):
