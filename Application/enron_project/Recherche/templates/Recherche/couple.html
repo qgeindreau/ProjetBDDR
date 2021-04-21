@@ -8,7 +8,7 @@
 <div class="col-md-6">
   <h2 class="text-center user_nom">Identité:</h2>
   {% for i in data %}
-    <p><a href="{% url 'Recherche:detail' user_id=i.user1.id %}"> {{i.user1.nom}} {{i.user1.prenom}} </a> et <a href="{% url 'Recherche:detail' user_id=i.user2.id %}">{{i.user2.nom}} {{i.user2.prenom}}</a> pour un total de {{i.valeur}} messages ! </p>
+    <p><a href="{% url 'Recherche:detail' user_id=i.user1.id %}"> {{i.user1.nom}} {{i.user1.prenom}} {{i.user1.categorie}} </a> et <a href="{% url 'Recherche:detail' user_id=i.user2.id %}">{{i.user2.nom}} {{i.user2.prenom}} {{i.user2.categorie}} </a> pour un total de {{i.valeur}} messages ! </p>
   {% endfor %}
 </div>
 <div class="col-md-6">
@@ -25,7 +25,7 @@
       </div>
       <div class="form-group">
         <label for="smin" class="control-label">Seuil inférieur</label>
-        <input type="text" name="smin" value="" id="sinf">
+        <input type="text" name="smin" value="" id="smin">
       </div>
       <div class="form-group">
         <label for="smax" class="control-label">Seuil Supérieur</label>
@@ -38,11 +38,9 @@
       <!-- <input type="hidden" class="hidden" value="{{ album_id }}" name="album_id"> -->
     
       <button type="submit" class="btn btn-success" >Voir</button>
+      <form class="form-inline" action="{% url 'Recherche:couple'%}" method="post">
+        {% csrf_token %}
     </form>
   </div>
-
-
-
 </div>
-
 {% endblock %}

@@ -11,15 +11,18 @@ def sql_asker(query,param):
         row = cursor.fetchall()
     return row
 
-def find_max_and_where(array,hmany):
+def find_max_and_where(A,hmany,top,bot):
     val_pos=[]
     while hmany>0:
-        val=np.amax(array)
-        pos=list(zip(*np.where(array == val)))
-        val_pos.append((val,pos))
-        for i in pos:
-            array[i[0]][i[1]]=0
-            hmany+=-1
+        try:
+            val=A[(A<top) & (A>bot)].max()
+            pos=list(zip(*np.where(A == val)))
+            for i in pos:
+                val_pos.append((val,i))
+                A[i[0]][i[1]]=0
+                hmany+=-1
+        except:
+            break
     return val_pos
 
 
@@ -143,10 +146,43 @@ def search(request):
     return render(request, 'Recherche/search.html', context)
 
 def couple(request):
-
+    if request.method == 'POST':
+        if type(request.POST.get('bdate'))==type('a') and request.POST.get('bdate') !='' :
+            bdate = " AND t3.date >'" + request.POST.get('bdate')+"' "
+        else:
+            bdate=''
+        if type(request.POST.get('edate'))==type('a') and request.POST.get('edate') !='':
+            edate =  " AND t3.date <'" + request.POST.get('edate')+"' "
+        else:
+            edate=''
+        if type(request.POST.get('smin'))==type('a'):
+            try:
+                smin=int(request.POST.get('smin'))
+            except:
+                smin=0
+        else:
+            smin=0
+        if (type(request.POST.get('smax'))==type('a')):
+            try:
+                smax=int(request.POST.get('smax'))
+            except:
+                smax=10**10
+        else:
+            smax=10**10
+        if type(request.POST.get('qt'))==type('a'):
+            try:
+                qt = int(request.POST.get('qt'))
+            except:
+                qt=10
+        else:
+            qt=10
+    else:
+        bdate,edate,smin,smax,qt='','',0,10**10,10
     user_list=User.objects.exclude(nom='NotInEnron')
     grille=pd.DataFrame(columns=[i.id for i in user_list],index=[i.id for i in user_list]).fillna(0)
+    list_id= [ i.id for i in user_list ]
     for ligne in list(grille.index):
+        try:
             req=sql_asker('''SELECT t6.id,count(t6.id)
 FROM "Recherche_user" AS t1 
 	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
@@ -154,15 +190,21 @@ FROM "Recherche_user" AS t1
 	JOIN "Recherche_mail_receiver" AS t4 ON t3.id=t4.mail_id_id
 	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
 	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
-WHERE t1.id=%s AND t6.prenom!='NotInEnron' GROUP BY t6.id;''',ligne)
-            for col_val in req:
-                grille.loc[ligne].loc[col_val[0]]=col_val[1]
+WHERE t1.id=%s AND t6.prenom!='NotInEnron' '''+bdate+edate+' GROUP BY t6.id;',ligne)
+        except:
+            req=sql_asker('''SELECT t6.id,count(t6.id)
+FROM "Recherche_user" AS t1 
+	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
+	JOIN "Recherche_mail" AS t3 ON t2.id =t3.mail_user_id_id
+	JOIN "Recherche_mail_receiver" AS t4 ON t3.id=t4.mail_id_id
+	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
+	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
+WHERE t1.id=%s AND t6.prenom!='NotInEnron'  GROUP BY t6.id;''',ligne)
+        for col_val in req:
+            grille.loc[ligne].loc[col_val[0]]=col_val[1]
     grille_finale=grille+grille.transpose(copy=True)
     grille_finale=np.triu(grille_finale,1)
-    l,c=np.shape(grille_finale)
-    grille_finale=np.concatenate((np.zeros(l).reshape(1,l),grille_finale),axis=0)
-    grille_finale=np.concatenate((np.zeros(c+1).reshape(1+c,1),grille_finale),axis=1)
-    construction=[(i[0],(User.objects.get(id=i[1][0][0]),User.objects.get(id=i[1][0][1]))) for i in find_max_and_where(grille_finale,10) ]
+    construction=[(i[0],(User.objects.get(id=list_id[i[1][0]]),User.objects.get(id=list_id[i[1][1]]))) for i in find_max_and_where(grille_finale,qt,smax,smin) ]
     class PourTemplate:
         def __init__(self,var):
             self.valeur=int(var[0])
@@ -170,7 +212,8 @@ WHERE t1.id=%s AND t6.prenom!='NotInEnron' GROUP BY t6.id;''',ligne)
             self.user2=var[1][1]
     ready=[PourTemplate(i) for i in construction]
     context={
-        'data':ready
+        'data':ready,
+        'p':(smin,smax)
     }
     return render(request, 'Recherche/couple.html', context)
 
