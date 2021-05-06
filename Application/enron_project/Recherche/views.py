@@ -5,25 +5,8 @@ from django.db import connection
 import pandas as pd
 import numpy as np
 import json
-def sql_asker(query,param):
-    with connection.cursor() as cursor:
-        cursor.execute(query, [param])
-        row = cursor.fetchall()
-    return row
-
-def find_max_and_where(A,hmany,top,bot):
-    val_pos=[]
-    while hmany>0:
-        try:
-            val=A[(A<top) & (A>bot)].max()
-            pos=list(zip(*np.where(A == val)))
-            for i in pos:
-                val_pos.append((val,i))
-                A[i[0]][i[1]]=0
-                hmany+=-1
-        except:
-            break
-    return val_pos
+import matplotlib
+from .Auxiliaire import sql_asker, find_max_and_where, visuel_detail1, visuel_couple
 
 
 
@@ -84,7 +67,8 @@ FROM "Recherche_user" AS t1
 	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
 	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
 WHERE t1.id=%s AND t5."adr_Mail" !~ '@enron.com$';''',[user.id])
-    contact_list=list(set(contact_as_sender_in)|set(contact_as_receiver_in))
+    contact_list=list((set(contact_as_sender_in)|set(contact_as_receiver_in)))
+    contact_si,contact_ri=[i.id for i in set(contact_as_sender_in)],[i.id for i in set(contact_as_receiver_in)]
     paginator = Paginator(contact_list, 6)
     page = request.GET.get('page')
     try:
@@ -109,6 +93,7 @@ JOIN "Recherche_user_email" t2 ON t1.id = t2.user_id_id
 JOIN "Recherche_mail_receiver" t3 ON t2.id = t3.user_mail_id_id
 JOIN "Recherche_mail" t4 ON t3.mail_id_id=t4.id
 WHERE t1.id=%s;''',user_id)
+    test=visuel_detail1(user_id,contact_si,contact_ri)
     context = {
         'user_nom': user.nom,
         'user_prenom':user.prenom,
@@ -127,7 +112,8 @@ WHERE t1.id=%s;''',user_id)
         'avg_time_rep':avg_time_rep,
         'avg_msd':round((avg_msd[0][0]/avg_msd[0][1].total_seconds())*3600*24,2),
         'avg_mrd':round((avg_mrd[0][0]/avg_mrd[0][1].total_seconds())*3600*24,2),
-        'msg_diff':avg_msd[0][0]
+        'msg_diff':avg_msd[0][0],
+        'test':test
     }
     return render(request, 'Recherche/detail.html', context)
 
@@ -211,9 +197,11 @@ WHERE t1.id=%s AND t6.prenom!='NotInEnron'  GROUP BY t6.id;''',ligne)
             self.user1=var[1][0]
             self.user2=var[1][1]
     ready=[PourTemplate(i) for i in construction]
+    visu=visuel_couple(ready)
     context={
         'data':ready,
-        'p':(smin,smax)
+        'p':(smin,smax),
+        'visu':visu
     }
     return render(request, 'Recherche/couple.html', context)
 

@@ -42,7 +42,7 @@
   {% for user in user_contact %}
       <div class="col-sm-4 text-center">
           <a href="{% url 'Recherche:detail' user_id=user.id %}">
-            <img class="img-responsive" src="{{ album.picture }}" alt="{{ user.categorie }}">
+            {{ user.categorie }}
           </a>
           <h3><a href="{% url 'Recherche:detail' user_id=user.id %}">{{ user.prenom }} {{ user.nom }}</a></h3>
       </div>
@@ -67,6 +67,7 @@
 
 </div>
 
-{{time_rep}}
+{{test|safe}}
+
 
 {% endblock %}
