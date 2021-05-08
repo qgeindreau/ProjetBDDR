@@ -1,6 +1,45 @@
 {% extends 'Recherche/base.html' %}
-
 {% block content %}
-{{ user.prenom }}
 
+<hr>
+<h1 class="intro-text text-center">Les jours ayant connus le plus d'échanges de mails:</h1>
+<hr class="detail-separator">
+<div class="col-md-6">
+  <h2 class="text-center user_nom">Journées ayant connues le plus d'échanges de mails:</h2>
+  {% for i in data %}
+    <p> Le {{i.date}} a connu un total de {{i.nbMails}} mails envoyés ! </p>
+  {% endfor %}
+</div>
+<div class="col-md-6">
+  <div style="margin-bottom:45px">
+    <h2 class="text-center user_nom">Formulaire de recherche:</h2>
+    <form class="form-inline" action="{% url 'Recherche:jour' %}" method="post">
+      <div class="form-group">
+        <label for="bdate" class="control-label">Date début (aaaa-mm-jj)</label>
+        <input type="text" name="bdate" value="" id="bdate">
+      </div>
+      <div class="form-group">
+        <label for="edate" class="control-label">Date de fin (aaaa-mm-jj)</label>
+        <input type="text" name="edate" value="" id="edate">
+      </div>
+      <div class="form-group">
+        <label for="smin" class="control-label">Seuil inférieur</label>
+        <input type="text" name="smin" value="" id="smin">
+      </div>
+      <div class="form-group">
+        <label for="smax" class="control-label">Seuil Supérieur</label>
+        <input type="text" name="smax" value="" id="smax">
+      </div>
+      <div class="form-group">
+        <label for="qt" class="control-label">Nombre de résultats souhaité</label>
+        <input type="text" name="qt" value="" id="qt">
+      </div>
+      <!-- <input type="hidden" class="hidden" value="{{ album_id }}" name="album_id"> -->
+
+      <button type="submit" class="btn btn-success" >Voir</button>
+      <form class="form-inline" action="{% url 'Recherche:jour'%}" method="post">
+        {% csrf_token %}
+    </form>
+  </div>
+</div>
 {% endblock %}

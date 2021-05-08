@@ -237,18 +237,62 @@ WHERE t1.id=%s AND t6.prenom!='NotInEnron';''',[i]))) for i in range(0,len(users
 
 
 def jour(request):
-    query = request.GET.get('query')
-    if not query:
-        users = User.objects.exclude(nom='NotInEnron')
+    if request.method == 'POST':
+        if type(request.POST.get('bdate'))==type('a') and request.POST.get('bdate') !='' :
+            bdate = " AND t1.date >'" + request.POST.get('bdate')+"' "
+        else:
+            bdate=''
+        if type(request.POST.get('edate'))==type('a') and request.POST.get('edate') !='':
+            edate =  " AND t1.date <'" + request.POST.get('edate')+"' "
+        else:
+            edate=''
+        if type(request.POST.get('smin'))==type('a'):
+            try:
+                smin=int(request.POST.get('smin'))
+            except:
+                smin=0
+        else:
+            smin=0
+        if (type(request.POST.get('smax'))==type('a')):
+            try:
+                smax=int(request.POST.get('smax'))
+            except:
+                smax=10**10
+        else:
+            smax=10**10
+        if type(request.POST.get('qt'))==type('a'):
+            try:
+                qt = int(request.POST.get('qt'))
+            except:
+                qt=10
+        else:
+            qt=10
     else:
-        # title contains the query is and query is not sensitive to case.
-        users = User.objects.filter(nom__icontains=query).exclude(nom='NotInEnron')
-    title = "Résultats pour la requête %s"%query
-    data=users[1]
-    context = {
-        'users': users,
-        'title': title,
-        'p':158,
-        'user':data
+        bdate,edate,smin,smax,qt='','',0,10**10,10
+    try:
+        req=sql_asker('''SELECT DATE(t1.date), count(t1.id)
+    FROM "Recherche_mail" as t1
+    WHERE DATE(t1.date)>'1990-01-01' '''+bdate+edate+''' 
+    GROUP BY DATE(t1.date) ORDER BY COUNT(t1.id) DESC;''',"")
+    except:
+        req=sql_asker('''SELECT DATE(t1.date), count(t1.id)
+    FROM "Recherche_mail" as t1
+    WHERE DATE(t1.date)>'1990-01-01'
+    GROUP BY DATE(t1.date) ORDER BY COUNT(t1.id) DESC;''',"")
+    jours=[]
+    for val in req:    
+        if val[1]>smin and val[1]<smax:
+            jours.append((val[0],val[1]))
+    try:
+        jours=jours[:qt]
+    except:
+        pass
+    class PourTemplate:
+        def __init__(self,var):
+            self.date=var[0]
+            self.nbMails=var[1]
+    data=[PourTemplate(i) for i in jours]
+    context={
+        'data':data
     }
     return render(request, 'Recherche/jour.html', context)
