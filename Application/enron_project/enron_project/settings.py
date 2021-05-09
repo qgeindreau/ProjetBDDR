@@ -23,7 +23,7 @@ SECRET_KEY = 'x^g$x_+gb@8h^fkw%!yi_ps=b+-6jl0=+eak2w0axsoy62mgt0'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -122,3 +122,4 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = "TER/MesAlgo/static"

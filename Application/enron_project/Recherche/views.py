@@ -341,8 +341,7 @@ def employe(request):
     context={
         'comu':cl_comi,
         'difu':cl_esr,
-        'time':cl_time,
-        'envoi':dic_com
+        'time':cl_time
 
 
     }
