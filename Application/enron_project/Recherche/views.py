@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import json
 import matplotlib
-from .Auxiliaire import sql_asker, find_max_and_where, visuel_detail1, visuel_couple
+from .Auxiliaire import sql_asker, find_max_and_where, visuel_detail1, visuel_couple,recu_interne,envoi_interne,time_rep,envoi_totale,received_rep
 
 
 
@@ -93,7 +93,26 @@ JOIN "Recherche_user_email" t2 ON t1.id = t2.user_id_id
 JOIN "Recherche_mail_receiver" t3 ON t2.id = t3.user_mail_id_id
 JOIN "Recherche_mail" t4 ON t3.mail_id_id=t4.id
 WHERE t1.id=%s;''',user_id)
-    test=visuel_detail1(user_id,contact_si,contact_ri)
+    try:
+        wow=round(len(contact_as_receiver_in)/(len(contact_as_receiver_in)+len(contact_as_receiver_out)),3)*100
+    except:
+        wow='Pas de message, pas de ratio'
+    try:
+        serious=round(len(contact_as_sender_in)/(len(contact_as_sender_in)+len(contact_as_sender_out)),3)*100
+    except:
+        serious='Pas de message, pas de ratio'
+    try:
+        test=visuel_detail1(user_id,contact_si,contact_ri)
+    except:
+        test='Pas de message'
+    try:
+        centset=round((avg_msd[0][0]/avg_msd[0][1].total_seconds())*3600*24,2)
+    except:
+        centset='Pas de message, pas d info'
+    try:
+        ilmanquiquine=round((avg_mrd[0][0]/avg_mrd[0][1].total_seconds())*3600*24,2)
+    except:
+        ilmanquiquine='Toujours rien déso'
     context = {
         'user_nom': user.nom,
         'user_prenom':user.prenom,
@@ -103,15 +122,15 @@ WHERE t1.id=%s;''',user_id)
         'user_s_tot':len(contact_as_sender_in)+len(contact_as_sender_out),
         'user_s_in':len(contact_as_sender_in),
         'user_s_out':len(contact_as_sender_out),
-        'ratio_s_i_tot':round(len(contact_as_sender_in)/(len(contact_as_sender_in)+len(contact_as_sender_out)),3)*100,
+        'ratio_s_i_tot':serious,
         'user_r_tot':len(contact_as_receiver_in)+len(contact_as_receiver_out),
         'user_r_in':len(contact_as_receiver_in),
         'user_r_out':len(contact_as_receiver_out),
-        'ratio_r_i_tot':round(len(contact_as_receiver_in)/(len(contact_as_receiver_in)+len(contact_as_receiver_out)),3)*100,
+        'ratio_r_i_tot':wow,
         'paginate':True,
         'avg_time_rep':avg_time_rep,
-        'avg_msd':round((avg_msd[0][0]/avg_msd[0][1].total_seconds())*3600*24,2),
-        'avg_mrd':round((avg_mrd[0][0]/avg_mrd[0][1].total_seconds())*3600*24,2),
+        'avg_msd':centset,
+        'avg_mrd':ilmanquiquine,
         'msg_diff':avg_msd[0][0],
         'test':test
     }
@@ -210,25 +229,120 @@ WHERE t1.id=%s AND t6.prenom!='NotInEnron'  GROUP BY t6.id;''',ligne)
 
 def employe(request):
     users=User.objects.exclude(nom='NotInEnron')
-    nombre_de_mail_externe=[(i,len(User.objects.raw('''SELECT t6.id
-FROM "Recherche_user" AS t1 
-	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
-	JOIN "Recherche_mail" AS t3 ON t2.id =t3.mail_user_id_id
-	JOIN "Recherche_mail_receiver" AS t4 ON t3.id=t4.mail_id_id
-	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
-	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
-WHERE t1.id=%s AND t6.prenom='NotInEnron';''',[i]))) for i in range(0,len(users))]
-    nombre_de_mail_interne=[(i,len(User.objects.raw('''SELECT t6.id
-FROM "Recherche_user" AS t1 
-	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
-	JOIN "Recherche_mail" AS t3 ON t2.id =t3.mail_user_id_id
-	JOIN "Recherche_mail_receiver" AS t4 ON t3.id=t4.mail_id_id
-	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
-	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
-WHERE t1.id=%s AND t6.prenom!='NotInEnron';''',[i]))) for i in range(0,len(users))]
+    if request.method == 'POST':
+        if type(request.POST.get('bdate'))==type('a') and request.POST.get('bdate') !='' :
+            bdate = " AND t3.date >'" + request.POST.get('bdate')+"' "
+        else:
+            bdate=''
+        if type(request.POST.get('edate'))==type('a') and request.POST.get('edate') !='':
+            edate =  " AND t3.date <'" + request.POST.get('edate')+"' "
+        else:
+            edate=''
+        if type(request.POST.get('smin'))==type('a'):
+            try:
+                smin=int(request.POST.get('smin'))
+            except:
+                smin=0
+        else:
+            smin=0
+        if (type(request.POST.get('smax'))==type('a')):
+            try:
+                smax=int(request.POST.get('smax'))
+            except:
+                smax=10**10
+        else:
+            smax=10**10
+        if type(request.POST.get('stmin'))==type('a'):
+            try:
+                stmin=int(request.POST.get('stmin'))
+            except:
+                stmin=0
+        else:
+            smin=0
+        if (type(request.POST.get('stmax'))==type('a')):
+            try:
+                stmax=int(request.POST.get('stmax'))
+            except:
+                stmax=10**10
+        else:
+            stmax=10**10
+        if type(request.POST.get('sdmin'))==type('a'):
+            try:
+                sdmin=int(request.POST.get('sdmin'))
+            except:
+                sdmin=0
+        else:
+            sdmin=0
+        if (type(request.POST.get('sdmax'))==type('a')):
+            try:
+                sdmax=int(request.POST.get('sdmax'))
+            except:
+                sdmax=10**10
+        else:
+            stmax=10**10    
+        if type(request.POST.get('qt'))==type('a'):
+            try:
+                qt = int(request.POST.get('qt'))
+            except:
+                qt=10
+        else:
+            qt=10
+    else:
+        bdate,edate,smin,smax,stmin,stmax,sdmin,sdmax,qt='','',0,10**10,0,10**10,0,10**10,10
+    com_interne=[recu_interne(bdate,edate),envoi_interne(bdate,edate)]
+    time=time_rep(bdate,edate)
+    difu=[envoi_totale(bdate,edate),received_rep(bdate,edate)]
+    dic_com={i[1]:i[0] for i in com_interne[0] }
+    for t in com_interne[1]:
+        try:
+            dic_com[t[1]]+=t[0]
+        except:
+            pass
+    dic_time={i[1]:i[0] for i in time}
+    dic_difu={i[1]:i[0] for i in difu[0] }
+    for t in difu[1]:
+        try:
+            dic_difu[t[1]]+=-t[0]
+        except:
+            pass
+    class SuperInformationsOnUser:
+        def __init__(self,user):
+            self.user=user
+            try:
+                self.time=dic_time[user.id]
+            except:
+                self.time=None
+            try:
+                self.esr=dic_difu[user.id]
+            except:
+                self.esr=0
+            try:
+                self.comi=dic_com[user.id]
+            except:
+                self.comi=0
+        def __str__(self):
+            return self.user.nom+' '+str(self.comi)
+    super_users=[SuperInformationsOnUser(i) for i in users]
+    cl_comi=list(filter(lambda x: ((x.comi > smin)&(x.comi<smax)), sorted(super_users, key=lambda x: x.comi, reverse=True)))
+    try:
+        cl_comi=cl_comi[:qt]
+    except:
+        pass
+    cl_esr=list(filter(lambda x: ((x.esr > sdmin)&(x.esr<sdmax)), sorted(super_users, key=lambda x: x.esr, reverse=True)))
+    try:
+        cl_esr=cl_esr[:qt]
+    except:
+        pass
+    cl_time=list(filter(lambda x: ((x.time.total_seconds() > stmin)&(x.time.total_seconds()<stmax)), sorted(list(filter(lambda x: x.time!=None,super_users)), key=lambda x: x.time.total_seconds() )))
+    try:
+        cl_time=cl_time[:qt]
+    except:
+        pass 
     context={
-        'n':nombre_de_mail_externe,
-        'm':nombre_de_mail_interne
+        'comu':cl_comi,
+        'difu':cl_esr,
+        'time':cl_time,
+        'envoi':dic_com
 
 
     }

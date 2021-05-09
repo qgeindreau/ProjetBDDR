@@ -112,3 +112,100 @@ def visuel_couple(data):
     fig=go.Figure(data=data, layout=layout)
     visu = fig.to_html(full_html=False, default_height=500, default_width=550)
     return visu
+
+def recu_interne(bdate,edate):
+    try:
+        recu=sql_asker('''SELECT COUNT(t1.id),t6.id
+FROM "Recherche_user" AS t1 
+	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
+	JOIN "Recherche_mail" AS t3 ON t2.id =t3.mail_user_id_id
+	JOIN "Recherche_mail_receiver" AS t4 ON t3.id=t4.mail_id_id
+	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
+	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
+WHERE t2."adr_Mail" ~'.+@enron.com$'AND t5."adr_Mail" ~'.+@enron.com$'AND t6.nom!='NotInEnron' '''+bdate+edate +'''GROUP BY t6.id ;''','')
+    except:
+        recu=sql_asker('''SELECT COUNT(t1.id),t6.id
+FROM "Recherche_user" AS t1 
+	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
+	JOIN "Recherche_mail" AS t3 ON t2.id =t3.mail_user_id_id
+	JOIN "Recherche_mail_receiver" AS t4 ON t3.id=t4.mail_id_id
+	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
+	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
+WHERE t2."adr_Mail" ~'.+@enron.com$'AND t5."adr_Mail" ~'.+@enron.com$'AND t6.nom!='NotInEnron' GROUP BY t6.id ;''','')
+    return recu
+def envoi_interne(bdate,edate):
+    try:
+        envoi=sql_asker('''SELECT COUNT(t6.id),t1.id
+FROM "Recherche_user" AS t1 
+	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
+	JOIN "Recherche_mail" AS t3 ON t2.id =t3.mail_user_id_id
+	JOIN "Recherche_mail_receiver" AS t4 ON t3.id=t4.mail_id_id
+	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
+	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
+WHERE t2."adr_Mail" ~'.+@enron.com$'AND t5."adr_Mail" ~'.+@enron.com$'AND t1.nom!='NotInEnron '''+bdate+edate + ''' GROUP BY t1.id ;''','')
+    except:
+        envoi=sql_asker('''SELECT COUNT(t6.id),t1.id
+FROM "Recherche_user" AS t1 
+	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
+	JOIN "Recherche_mail" AS t3 ON t2.id =t3.mail_user_id_id
+	JOIN "Recherche_mail_receiver" AS t4 ON t3.id=t4.mail_id_id
+	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
+	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
+WHERE t2."adr_Mail" ~'.+@enron.com$'AND t5."adr_Mail" ~'.+@enron.com$' AND t1.nom!='NotInEnron' GROUP BY t1.id ;''','')
+    return envoi
+
+def time_rep(bdate,edate):
+    try:
+        liste=sql_asker('''SELECT AVG(t3.date-t3."Mad"),t1.id
+FROM "Recherche_user" t1
+JOIN "Recherche_user_email" t2 ON t1.id = t2.user_id_id
+JOIN "Recherche_mail" t3 ON t2.id = t3.mail_user_id_id
+WHERE t3.is_a_response=true AND t3."Mad" > '1901-01-01' AND t3.date > t3."Mad"'''+bdate+edate+''' GROUP BY t1.id;''','')
+    except:
+        liste=sql_asker('''SELECT AVG(t3.date-t3."Mad"),t1.id
+FROM "Recherche_user" t1
+JOIN "Recherche_user_email" t2 ON t1.id = t2.user_id_id
+JOIN "Recherche_mail" t3 ON t2.id = t3.mail_user_id_id
+WHERE t3.is_a_response=true AND t3."Mad" > '1901-01-01' AND t3.date > t3."Mad"  GROUP BY t1.id;''','')
+    return liste
+
+def envoi_totale(bdate,edate):
+    try:
+        liste=sql_asker('''SELECT COUNT(t6.id),t1.id
+FROM "Recherche_user" AS t1 
+	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
+	JOIN "Recherche_mail" AS t3 ON t2.id =t3.mail_user_id_id
+	JOIN "Recherche_mail_receiver" AS t4 ON t3.id=t4.mail_id_id
+	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
+	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
+WHERE t1.nom!='NotInEnron' '''+bdate+edate+''' GROUP BY t1.id ;''','')
+    except:
+        liste=sql_asker('''SELECT COUNT(t6.id),t1.id
+FROM "Recherche_user" AS t1 
+	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
+	JOIN "Recherche_mail" AS t3 ON t2.id =t3.mail_user_id_id
+	JOIN "Recherche_mail_receiver" AS t4 ON t3.id=t4.mail_id_id
+	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
+	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
+WHERE t1.nom!='NotInEnron' GROUP BY t1.id ;''','')
+    return liste
+def received_rep(bdate,edate):
+    try:
+        liste=sql_asker('''SELECT COUNT(t1.id),t6.id
+FROM "Recherche_user" AS t1 
+	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
+	JOIN "Recherche_mail" AS t3 ON t2.id =t3.mail_user_id_id
+	JOIN "Recherche_mail_receiver" AS t4 ON t3.id=t4.mail_id_id
+	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
+	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
+WHERE t3.is_a_response=true'''+bdate+edate+ '''GROUP BY t6.id ;''','')
+    except:
+        liste=sql_asker('''SELECT COUNT(t1.id),t6.id
+FROM "Recherche_user" AS t1 
+	JOIN "Recherche_user_email" AS t2 ON t1.id = t2.user_id_id
+	JOIN "Recherche_mail" AS t3 ON t2.id =t3.mail_user_id_id
+	JOIN "Recherche_mail_receiver" AS t4 ON t3.id=t4.mail_id_id
+	JOIN "Recherche_user_email" AS t5 ON t4.user_mail_id_id=t5.id
+	JOIN "Recherche_user" AS t6 ON t6.id = t5.user_id_id
+WHERE t3.is_a_response=true GROUP BY t6.id ;''','')
+    return liste
